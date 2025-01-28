@@ -1,51 +1,54 @@
-
 pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'alpine:3.21.2'
-        DOCKER_CREDENTIALS_ID = 'ayaz4'
-        SSH_CREDENTIALS_ID = 'server-ssh-credentials'
-        DEPLOY_SERVER = '13.213.72.254'
+        DOCKER_IMAGE = "ayaz4/tomcat-new"
+        DOCKER_TAG = "latest"
+        DOCKER_CREDENTIALS = "123456789"
+        DEPLOY_SERVER = "18.136.126.31"
+        SSH_CREDENTIALS = "id_ed25519.pub"
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Clone Repository') {
             steps {
-                checkout scm
+                git ''
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', ayaz4) {
-                        def appImage = docker.build("${alpine:3.21.2}:${env.BUILD_NUMBER}")
-                        alpine:3.21.2.push()
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    withDockerRegistry([credentialsId: DOCKER_CREDENTIALS, url: '']) {
+                        sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     }
                 }
             }
         }
 
-        stage('Deploy Application') {
+        stage('Deploy to Server') {
             steps {
-                sshagent([SSH_CREDENTIALS_ID]) {
-                    sh "ssh -o StrictHostKeyChecking=no user@${DEPLOY_SERVER} \
-                    'docker pull ${alpine:3.21.2}:${env.BUILD_NUMBER} && \
-                    docker stop app || true && \
-                    docker rm app || true && \
-                    docker run -d --name app -p 8080:8080 ${alpine:3.21.2}:${env.BUILD_NUMBER}'"
+                script {
+                    sshagent([SSH_CREDENTIALS]) {
+                        sh """
+                        ssh -o StrictHostKeyChecking=no ubuntu@${DEPLOY_SERVER} <<EOF
+                        docker pull ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        docker stop my-app || true
+                        docker rm my-app || true
+                        docker run -d --name my-app -p 80:80 ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        EOF
+                        """
+                    }
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo 'Deployment successful!'
-        }
-        failure {
-            echo 'Deployment failed!'
         }
     }
 }
