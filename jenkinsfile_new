@@ -5,7 +5,7 @@ pipeline {
         DOCKER_IMAGE = "ayaz4/tomcat_new"
         DOCKER_TAG = "LATEST"
         DOCKER_CREDENTIALS = "123456789"
-        DEPLOY_SERVER = "18.136.126.31"
+        DEPLOY_SERVER = "3.0.91.193"
         SSH_CREDENTIALS = "id_ed25519.pub"
     }
 
