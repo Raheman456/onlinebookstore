@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "ayaz4/tomcat-new"
-        DOCKER_TAG = "latest"
+        DOCKER_IMAGE = "ayaz4/tomcat_new"
+        DOCKER_TAG = "LATEST"
         DOCKER_CREDENTIALS = "123456789"
         DEPLOY_SERVER = "18.136.126.31"
         SSH_CREDENTIALS = "id_ed25519.pub"
@@ -19,7 +19,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t ${tomcat-new}:${latest} ."
+                    sh "docker build -t ${tomcat_new}:${LATEST} ."
                 }
             }
         }
@@ -28,7 +28,7 @@ pipeline {
             steps {
                 script {
                     withDockerRegistry([ayaz4:123456789, url: '']) {
-                        sh "docker push ${tomcat-new}:${latest}"
+                        sh "docker push ${tomcat_new}:${LATEST}"
                     }
                 }
             }
@@ -40,10 +40,10 @@ pipeline {
                     sshagent(id_ed25519.pub) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ubuntu@${DEPLOY_SERVER} <<EOF
-                        docker pull ${tomcat-new}:${latest}
+                        docker pull ${tomcat_new}:${LATEST}
                         docker stop my-app || true
                         docker rm my-app || true
-                        docker run -d --name my-app -p 80:80 $tomcat-new}:${latest}
+                        docker run -d --name my-app -p 80:80 $tomcat_new}:${LATEST}
                         EOF
                         """
                     }
