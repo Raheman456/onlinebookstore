@@ -1,46 +1,47 @@
-pipeline {
+pipeline{
     agent any
 
-    tools {
-        // Name should match the one you configured in the Global Tool Configuration
-        maven 'maven'
-    }
-
-    stages {
-        stage('Checkout') {
-            steps {
+    stages{
+        stage('scm'){
+            steps{
                 checkout scm
             }
         }
-
-        stage('Build') {
-            steps {
+        stage('build'){
+            steps{
                 sh 'mvn clean install'
+            }
         }
-    }
-        stage('Publish to Nexus') {
-    steps {
-        nexusArtifactUploader artifacts: [
-         [
-             artifactId: 'onlinebookstore', 
-             classifier: '', 
-             file: '/var/lib/jenkins/workspace/onlinebookstores/target/onlinebookstore-0.0.1-SNAPSHOT.war', 
-             type: 'war'
-                    ]
-        ], 
-            credentialsId: 'nexus', 
-            groupId: 'onlinebookstore', 
-            nexusUrl: '3.106.164.181:8081', 
-            nexusVersion: 'nexus3', 
-            protocol: 'http', 
-            repository: 'onlinebookstores', 
-            version: '0.0.1-SNAPSHOT'
-    }
+        stage('nexus'){
+            steps{
+                nexusArtifactUploader artifacts: [
+                    [
+                        artifactId: 'onlinebookstore', 
+                        classifier: '', 
+                        file: '/var/lib/jenkins/workspace/webapplication/target/onlinebookstore-0.0.1-SNAPSHOT.war', 
+                        type: 'war'
+                        ]
+                    ], 
+                        credentialsId: 'Nexus', 
+                        groupId: 'onlinebookstore', 
+                        nexusUrl: '43.205.235.141:8081', 
+                        nexusVersion: 'nexus3', 
+                        protocol: 'http', 
+                        repository: 'onlinebookstores', 
+                        version: '0.0.1-SNAPSHOT'
+            }
         }
-        stage('Copy to Tomcat Webapps') {
-            steps {
-                deploy adapters: [tomcat9(credentialsId: 'Tomcat', path: '', url: 'http://3.104.119.1:8090/')], contextPath: null, war: '**/*.war'
-		}
-	}
+        stage('deploy'){
+            steps{
+                deploy adapters: [
+                    tomcat9(
+                        credentialsId: 'Tomcat', 
+                        path: '', 
+                        url: 'http://3.110.172.100:8090/')
+                        ], 
+                        contextPath: null, 
+                        war: '**/*.war'
+            }
+        }
     }
 }
