@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "ayaz4/tomcat_new"
+        DOCKER_TAG = "LATEST"
+        DOCKER_CREDENTIALS = "123456789"
+        DEPLOY_SERVER = "3.0.91.193"
+        SSH_CREDENTIALS = "id_ed25519.pub"
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git 'https://github.com/ayazap/onlinebookstore.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh "docker build -t ${tomcat_new}:${LATEST} ."
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    withDockerRegistry([ayaz4:123456789, url: '']) {
+                        sh "docker push ${tomcat_new}:${LATEST}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Server') {
+            steps {
+                script {
+                    sshagent(id_ed25519.pub) {
+                        sh """
+                        ssh -o StrictHostKeyChecking=no ubuntu@${DEPLOY_SERVER} <<EOF
+                        docker pull ${tomcat_new}:${LATEST}
+                        docker stop my-app || true
+                        docker rm my-app || true
+                        docker run -d --name my-app -p 80:80 $tomcat_new}:${LATEST}
+                        EOF
+                        """
+                    }
+                }
+            }
+        }
+    }
+}
